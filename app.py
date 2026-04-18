@@ -1,98 +1,92 @@
 import streamlit as st
 
-st.set_page_config(page_title="Evaluación de Riesgo - Diabetes", layout="centered")
 
-st.title("🧠 Evaluación de Factores de Riesgo")
-st.subheader("Modelo educativo - Diabetes Mellitus (Tipo 1 y 2)")
+def main() -> None:
+    st.set_page_config(page_title="Evaluación de Riesgo - Diabetes", layout="centered")
 
-st.write("Ingresa valores entre 0 y 1:")
-st.write("0 = Sin riesgo | 1 = Riesgo máximo")
+    st.title("🩺 Evaluación de Factores de Riesgo")
+    st.subheader("Modelo educativo - Diabetes Mellitus (Tipo 1 y Tipo 2)")
+    st.caption("Ingresa valores entre 0 y 1, donde 0 = sin riesgo y 1 = riesgo máximo.")
 
-# Nombre
-nombre = st.text_input("Nombre del paciente (opcional)")
+    nombre = st.text_input("Nombre del paciente (opcional)")
 
-# ==============================
-# FACTORES BIOLÓGICOS
-# ==============================
-st.header("Factores Biológicos")
+    st.markdown("### Factores Biológicos")
+    edad_risk = st.slider("Edad (>50 años)", 0.0, 1.0, 0.0)
+    genetic_risk = st.slider("Predisposición genética (antecedentes familiares)", 0.0, 1.0, 0.0)
+    base_metabolic = 0.10
 
-edad_risk = st.slider("Edad (>50 años)", 0.0, 1.0, 0.0)
-genetic_risk = st.slider("Predisposición genética (antecedentes familiares)", 0.0, 1.0, 0.0)
-base_metabolic = 0.10
+    st.markdown("### Estilo de Vida")
+    dieta = st.slider("Dieta (alto en azúcar/grasas)", 0.0, 1.0, 0.0)
+    actividad = st.slider("Actividad física (sedentarismo)", 0.0, 1.0, 0.0)
+    adherencia = st.slider("Adherencia terapéutica", 0.0, 1.0, 0.0)
+    estres = st.slider("Estrés", 0.0, 1.0, 0.0)
 
-# ==============================
-# ESTILO DE VIDA
-# ==============================
-st.header("Estilo de Vida")
+    st.markdown("### Factores Adicionales")
+    imc = st.slider("Índice de Masa Corporal (IMC)", 0.0, 1.0, 0.0)
+    alcohol = st.slider("Consumo de alcohol", 0.0, 1.0, 0.0)
+    tabaco = st.slider("Tabaquismo", 0.0, 1.0, 0.0)
+    presion = st.slider("Presión arterial elevada", 0.0, 1.0, 0.0)
 
-dieta = st.slider("Dieta (alto en azúcar/grasas)", 0.0, 1.0, 0.0)
-actividad = st.slider("Actividad física (sedentarismo)", 0.0, 1.0, 0.0)
-adherencia = st.slider("Adherencia terapéutica", 0.0, 1.0, 0.0)
-estres = st.slider("Estrés", 0.0, 1.0, 0.0)
+    input_values = [
+        edad_risk,
+        genetic_risk,
+        dieta,
+        actividad,
+        adherencia,
+        estres,
+        imc,
+        alcohol,
+        tabaco,
+        presion,
+    ]
+    input_ratio = sum(input_values) / len(input_values)
+    st.progress(input_ratio, text=f"Índice relativo ingresado: {input_ratio * 100:.0f}%")
 
-# ==============================
-# FACTORES ADICIONALES
-# ==============================
-st.header("Factores Adicionales")
+    if st.button("Calcular resultados"):
+        biological_factors = {
+            "Genética": genetic_risk,
+            "Edad": edad_risk,
+            "Función Base": base_metabolic,
+        }
+        lifestyle_factors = {
+            "Dieta": dieta,
+            "Actividad Física": actividad,
+            "Adherencia": adherencia,
+            "Estrés": estres,
+            "IMC": imc,
+            "Alcohol": alcohol,
+            "Tabaquismo": tabaco,
+            "Presión Arterial": presion,
+        }
 
-imc = st.slider("Índice de Masa Corporal (IMC)", 0.0, 1.0, 0.0)
-alcohol = st.slider("Consumo de alcohol", 0.0, 1.0, 0.0)
-tabaco = st.slider("Tabaquismo", 0.0, 1.0, 0.0)
-presion = st.slider("Presión arterial elevada", 0.0, 1.0, 0.0)
+        total_bio = sum(biological_factors.values())
+        total_life = sum(lifestyle_factors.values())
+        total = total_bio + total_life
 
-# ==============================
-# BOTÓN DE RESULTADO
-# ==============================
-if st.button("Calcular resultados"):
+        pct_bio = (total_bio / total) * 100
+        pct_life = (total_life / total) * 100
 
-    biological_factors = {
-        'Genética': genetic_risk,
-        'Edad': edad_risk,
-        'Función Base': base_metabolic
-    }
+        st.subheader("Resultados")
+        if nombre:
+            st.write(f"Paciente: {nombre}")
 
-    lifestyle_factors = {
-        'Dieta': dieta,
-        'Actividad Física': actividad,
-        'Adherencia': adherencia,
-        'Estrés': estres,
-        'IMC': imc,
-        'Alcohol': alcohol,
-        'Tabaquismo': tabaco,
-        'Presión Arterial': presion
-    }
+        col1, col2 = st.columns(2)
+        col1.metric("Factores Biológicos", f"{pct_bio:.1f}%")
+        col2.metric("Estilo de Vida", f"{pct_life:.1f}%")
 
-    total_bio = sum(biological_factors.values())
-    total_life = sum(lifestyle_factors.values())
-    total = total_bio + total_life
+        chart_data = {
+            "Categoría": ["Biológicos", "Estilo de Vida"],
+            "Porcentaje": [pct_bio, pct_life],
+        }
+        st.bar_chart(chart_data, x="Categoría", y="Porcentaje")
 
-    pct_bio = (total_bio / total) * 100
-    pct_life = (total_life / total) * 100
+        if pct_life > pct_bio:
+            st.success("Predominan factores modificables. Se recomienda mejorar hábitos.")
+        else:
+            st.warning("Predominan factores biológicos. Se recomienda control médico.")
 
-    st.subheader("Resultados")
+        st.info("Este modelo es educativo y no sustituye diagnóstico clínico.")
 
-    if nombre:
-        st.write(f"Paciente: {nombre}")
 
-    st.write(f"Factores Biológicos: {pct_bio:.1f}%")
-    st.write(f"Estilo de Vida: {pct_life:.1f}%")
-
-    # GRÁFICA DE PASTEL
-    st.subheader("Gráfica de distribución")
-
-    chart_data = {
-        "Categoría": ["Biológicos", "Estilo de Vida"],
-        "Porcentaje": [pct_bio, pct_life]
-    }
-
-    st.bar_chart(chart_data, x="Categoría", y="Porcentaje")
-
-    # INTERPRETACIÓN
-    st.subheader("Interpretación")
-
-    if pct_life > pct_bio:
-        st.success("Predominan factores modificables. Se recomienda mejorar hábitos.")
-    else:
-        st.warning("Predominan factores biológicos. Se recomienda control médico.")
-
-    st.info("Este modelo es educativo y no sustituye diagnóstico clínico.")
+if __name__ == "__main__":
+    main()
